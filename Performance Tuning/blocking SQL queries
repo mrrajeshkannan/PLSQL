@@ -16,3 +16,10 @@ SELECT status, EVENT,
   WHERE type = 'USER'
   AND STATUS='ACTIVE'
 ORDER BY status,osuser,program;
+
+
+----Table gather
+BEGIN
+  DBMS_STATS.GATHER_TABLE_STATS('schema_name', 'table_name');
+  DBMS_STATS.GATHER_INDEX_STATS('schema_name', 'index_name');
+END;
