@@ -1,0 +1,18 @@
+-- Active Session Monitoring for database performance
+----Here you can find the pinpointed blocking SQL queries.
+
+
+-----Runn the query parlal while running the package runs.
+SELECT status, EVENT, 
+	schemaname||'@'||service_name  from_where, 
+        osuser,
+        program,
+        FINAL_BLOCKING_SESSION_STATUS,
+        blocking_session,
+	TO_CHAR(logon_time,'HH:MI:SS AM') as from_when,
+	NVL((select DISTINCT sql_text from v$sql sql where sql.sql_id = ses.sql_id),'NOTHING GOING ON') sql_text ,
+    sid||','||serial# sid_ser
+   FROM v$session ses
+  WHERE type = 'USER'
+  AND STATUS='ACTIVE'
+ORDER BY status,osuser,program;
