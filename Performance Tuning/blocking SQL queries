@@ -18,8 +18,16 @@ SELECT status, EVENT,
 ORDER BY status,osuser,program;
 
 
-----Table gather
+----Table gather & Index gather:-
 BEGIN
   DBMS_STATS.GATHER_TABLE_STATS('schema_name', 'table_name');
   DBMS_STATS.GATHER_INDEX_STATS('schema_name', 'index_name');
 END;
+
+
+----FINDING A TABLE IS LOCKED:-
+select *
+from v$session a, v$locked_object b, dba_objects c
+where b.object_id = c.object_id
+and a.sid = b.session_id
+and OBJECT_NAME=upper('PGIW_TAC_FIRE');
