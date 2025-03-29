@@ -1,0 +1,73 @@
+```
+CREATE OR REPLACE PROCEDURE EXTRACT_FOR_CSV(P_YEAR NUMBER, P_MONTH NUMBER)
+IS
+    FILE_HANDLE UTL_FILE.FILE_TYPE;
+
+    TYPE SALES_REC IS RECORD (
+        YEAR NUMBER,
+        MONTH NUMBER,
+        SUPPLIER VARCHAR2(100),
+        ITEM_CODE NUMBER,
+        ITEM_DESCRIPTION VARCHAR2(100),
+        ITEM_TYPE VARCHAR2(20),
+        RETAIL_SALES NUMBER,
+        RETAIL_TRANSFERS NUMBER,
+        WAREHOUSE_SALES NUMBER
+    );
+
+    TYPE SALES_TABLE IS TABLE OF SALES_REC;
+
+    SALES_DATA SALES_TABLE;  -- Collection to hold fetched data
+
+    BATCH_SIZE CONSTANT PLS_INTEGER := 10000;  -- Recommended batch size
+
+BEGIN
+    FILE_HANDLE := UTL_FILE.FOPEN(location => 'DATA_DIR', filename => 'Sales_report_bulk.csv', open_mode => 'W');
+    UTL_FILE.PUT_LINE(FILE_HANDLE, 'YEAR,MONTH,SUPPLIER,ITEM_CODE,ITEM_DESCRIPTION,ITEM_TYPE,RETAIL_SALES,RETAIL_TRANSFERS,WAREHOUSE_SALES');
+    
+    DECLARE
+        OFFSET NUMBER := 0;
+    BEGIN
+        LOOP
+            SELECT YEAR, MONTH, SUPPLIER, ITEM_CODE, ITEM_DESCRIPTION, ITEM_TYPE, RETAIL_SALES, RETAIL_TRANSFERS, WAREHOUSE_SALES
+            BULK COLLECT INTO SALES_DATA
+            FROM (SELECT YEAR, MONTH, SUPPLIER, ITEM_CODE, ITEM_DESCRIPTION, ITEM_TYPE, RETAIL_SALES, RETAIL_TRANSFERS, WAREHOUSE_SALES
+                  FROM SALES
+                  WHERE YEAR = P_YEAR AND MONTH = P_MONTH
+                  ORDER BY ITEM_CODE
+                  OFFSET OFFSET ROWS FETCH NEXT BATCH_SIZE ROWS ONLY);
+
+            EXIT WHEN SALES_DATA.COUNT = 0;
+
+            FOR I IN SALES_DATA.FIRST .. SALES_DATA.LAST LOOP
+                UTL_FILE.PUT_LINE(FILE_HANDLE, SALES_DATA(I).YEAR || ',' ||
+                                               SALES_DATA(I).MONTH || ',' ||
+                                               SALES_DATA(I).SUPPLIER || ',' ||
+                                               SALES_DATA(I).ITEM_CODE || ',' ||
+                                               SALES_DATA(I).ITEM_DESCRIPTION || ',' ||
+                                               SALES_DATA(I).ITEM_TYPE || ',' ||
+                                               SALES_DATA(I).RETAIL_SALES || ',' || 
+                                               SALES_DATA(I).RETAIL_TRANSFERS || ',' ||
+                                               SALES_DATA(I).WAREHOUSE_SALES);
+            END LOOP;
+
+            OFFSET := OFFSET + BATCH_SIZE;
+
+            -- Clear collection to free memory
+            SALES_DATA.DELETE;
+        END LOOP;
+    END;
+
+    UTL_FILE.FCLOSE(FILE_HANDLE);
+
+    DBMS_OUTPUT.PUT_LINE('File generated successfully with bulk collect and LIMIT handling.');
+EXCEPTION
+    WHEN OTHERS THEN
+        IF UTL_FILE.IS_OPEN(FILE_HANDLE) THEN
+            UTL_FILE.FCLOSE(FILE_HANDLE);
+        END IF;
+        RAISE;
+END EXTRACT_FOR_CSV;
+/
+
+```
