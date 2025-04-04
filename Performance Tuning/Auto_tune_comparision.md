@@ -1,26 +1,29 @@
 Automating Performance Comparison with SQL Trace & TKPROF 🚀
+
 We'll build a PL/SQL script that:
 
-Enables tracing for both the old and optimized procedures.
+1. Enables tracing for both the old and optimized procedures.
 
-Generates trace files.
+2. Generates trace files.
 
-Processes those files using TKPROF.
+3. Processes those files using TKPROF.
 
-Outputs comparison metrics in a clean report.
+4. Outputs comparison metrics in a clean report.
+
 
 🔥 Step 1: Setup Directory & Permissions
 Create a Directory for Trace Files (if not already created).
-
+```
 sql
-Copy
-Edit
+
 CREATE OR REPLACE DIRECTORY TRACE_DIR AS 'D:\trace_files';
 GRANT READ, WRITE ON DIRECTORY TRACE_DIR TO HR;
+```
+
 🔥 Step 2: Create Procedure to Automate Performance Tracing
+```
 sql
-Copy
-Edit
+
 CREATE OR REPLACE PROCEDURE compare_procedure_performance(
     p_old_proc_name   VARCHAR2,
     p_new_proc_name   VARCHAR2,
@@ -70,10 +73,14 @@ EXCEPTION
         DBMS_OUTPUT.PUT_LINE('Error occurred: ' || SQLERRM);
 END;
 /
-🔥 Step 3: Execute the Comparison Procedure
+
+```
+
+
+🔥 Step 3: Execute the Comparison Procedure:
+
+```
 sql
-Copy
-Edit
 BEGIN
     compare_procedure_performance(
         p_old_proc_name => 'OLD_PROC_NAME',   -- Replace with your old procedure name
@@ -82,7 +89,13 @@ BEGIN
     );
 END;
 /
+```
+
+
+
 🔥 Step 4: Review the Output Files
+
+
 Check your TRACE_DIR for the generated reports:
 
 old_proc_report.txt
@@ -95,6 +108,8 @@ Elapsed Time	High	Reduced
 CPU Time	High	Reduced
 Execute Calls	More	Less (Optimized by FORALL)
 Disk Reads	More	Less (Efficient Fetching)
+
+
 📌 Explanation
 The procedure compare_procedure_performance automates tracing for both procedures.
 
